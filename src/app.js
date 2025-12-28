@@ -1,49 +1,36 @@
 const express = require("express");
-
+const connectDB = require("./config/database")
 const app = express();
+const User = require("./models/user");
 
-const {adminAuth} = require("./middlewares/auth")
-
-//how to use middleware and route handler
-
-//WITHOUT MIDDLEWARE
-
-// app.get("/admin/GetAllData",(req,res)=>{
-//     //logic to chk request is authorized or not->If yes then Get all data
-//     const token = "xyz";
-//     const isAdmin = token === "xyz";
-//     if(isAdmin){
-//         res.send("Get all data")
-//     }
-//     else{
-//         res.status(401).send("unauthorized request");
-//     }
-// });
-
-// app.get("/admin/deleteUser",(req,res)=>{
-
-//     //logic to chk request is authorized or not->If yes then Delete user
-//     const token = "xyz";
-//     const isAdmin = token === "xyz";
-//     if(isAdmin){
-//         res.send("Delete user data")
-//     }
-//     else{
-//         res.status(401).send("unauthorized request");
-//     }
-// })
-
-app.use("/admin",adminAuth);
-
-app.get("/admin/getalluser",(req,res,next)=>{
-    res.send("Get all user");
+app.post("/signup", async (req, res) => {
+    const userObj = {
+        firstName: "Zoro",
+        lastName: "swordman",
+        emailID: "zoro@gmail.com",
+        password: "zoro16"
+    }
+    //creating a new instance of User model
+    const user = new User(userObj);
+    //save data in database
+    try {
+        await user.save();
+        res.send("User added successfully");
+    }
+    catch (err) {
+        res.status(400).send("Something went wrong");
+    }
 })
 
-app.get("/admin/deleteuser",(req,res,next)=>{
-    res.send("deleted user");
+connectDB().then(() => {
+    console.log("Database connection established");
+    app.listen(3000, () => {
+        console.log("Server started successfully");
+
+    });
+
+}).catch((err) => {
+    console.log("Cannot connect to Database");
+
 })
 
-app.listen(3000, ()=>{
-    console.log("Server started successfully");
-    
-});
