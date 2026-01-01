@@ -3,13 +3,14 @@ const connectDB = require("./config/database")
 const app = express();
 const User = require("./models/user");
 
+//this convert req.body from json to object
+app.use(express.json());
+
 app.post("/signup", async (req, res) => {
-    const userObj = {
-        firstName: "Zoro",
-        lastName: "swordman",
-        emailID: "zoro@gmail.com",
-        password: "zoro16"
-    }
+    console.log(req);
+    
+    //here we were hardcoding userObj but we need to make this dynamic->we will use req.data
+    const userObj = req.body;
     //creating a new instance of User model
     const user = new User(userObj);
     //save data in database
