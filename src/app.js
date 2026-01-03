@@ -20,7 +20,7 @@ app.post("/signup", async (req, res) => {
         res.send("User added successfully");
     }
     catch (err) {
-        res.status(400).send("Something went wrong");
+        res.status(400).send("Something went wrong"+ err.message);
     }
 });
 
