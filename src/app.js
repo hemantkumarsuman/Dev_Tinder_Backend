@@ -98,9 +98,16 @@ app.delete("/DeleteUserById",async (req,res)=>{
 });
 
 //Update user by ID
-app.patch("/UpdateUser", async (req,res)=>{
-    const userId = req.body.userId;
+app.patch("/UpdateUser/:userId", async (req,res)=>{
+    
+    const userId = req.params.userId;
     const updateData = req.body;
+
+    const ALLOWED_FIELD = ["about","age","gender","photoUrl","skills"];
+    const isAllowed = Object.keys(updateData).every((k)=> ALLOWED_FIELD.includes(k));
+    if(!isAllowed){
+        res.status(400).send("Update Not Allowed");
+    }
     try{
         const user = await User.findByIdAndUpdate(userId, updateData,{
             new: true,
@@ -114,7 +121,7 @@ app.patch("/UpdateUser", async (req,res)=>{
         }
     }
     catch(err){
-        res.status(400).send("Something went wrong");
+        res.status(400).send("Something went wrong"+err);
     }
 });
 
