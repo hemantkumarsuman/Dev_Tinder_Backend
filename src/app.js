@@ -2,17 +2,35 @@ const express = require("express");
 const connectDB = require("./config/database")
 const app = express();
 const User = require("./models/user");
+const {validateSignUpData} = require("./utils/validate");
+const bcrypt = require("bcrypt");
+const validator = require("validator");
+const cookieParser = require("cookie-parser");
+const token = require("jsonwebtoken");
 
 //this convert req.body from json to object
 app.use(express.json());
 
+//cookie parser
+app.use(cookieParser());
+
 //signup API
 app.post("/signup", async (req, res) => {
     console.log(req);
+    const { firstName, lastName, emailID, password } = req.body;
+    //Validate signup data
+    validateSignUpData(req);
+
+    //encrypt password    
+    const passwordHash = await bcrypt.hash(password, 10); //returns promise
     
-    //here we were hardcoding userObj but we need to make this dynamic->we will use req.data
-    const userObj = req.body;
     //creating a new instance of User model
+    const userObj = {
+        firstName,
+        lastName,
+        emailID,
+        password: passwordHash
+    };
     const user = new User(userObj);
     //save data in database
     try {
@@ -20,8 +38,53 @@ app.post("/signup", async (req, res) => {
         res.send("User added successfully");
     }
     catch (err) {
-        res.status(400).send("Something went wrong"+ err.message);
+        res.status(400).send(err.message);
     }
+});
+
+//login API
+app.post("/login", async (req,res) => {
+
+    try{
+        const {emailID, password} = req.body;
+        if(!validator.isEmail(emailID)){
+            throw new Error("Enter valid EMAILID");
+        }
+
+        //check whether emailID is present is DB
+        const user = await User.findOne({emailID: emailID});
+        
+        if(user){
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if(isPasswordValid){
+                //create JWT token
+                
+
+                //Add token to cookie and res back to user
+                res.cookie("token","iyauydv27yhwvahvd927eiv");
+
+                res.send("Login Successfull!!!");
+            }
+            else{
+                throw new Error("InValid Password...");
+            }
+        }
+        else{
+            throw new Error("Enter Valid registered EmailId");
+        }
+    }
+    catch(err){
+        res.status(400).send(err.message);
+    }
+})
+
+//Get profile of logged in user
+app.get("/GetProfile",async (req,res)=>{
+    const cookies = req.cookies;
+    console.log(cookies);
+
+    res.send("Reading cookies...")
+    
 });
 
 //Get User By EmailID
