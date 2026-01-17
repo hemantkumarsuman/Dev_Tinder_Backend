@@ -53,10 +53,10 @@ app.post("/login", async (req, res) => {
         const user = await User.findOne({ emailID: emailID });
 
         if (user) {
-            const isPasswordValid = await bcrypt.compare(password, user.password);
+            const isPasswordValid = await user.validatePassword(password);
             if (isPasswordValid) {
                 //create JWT token
-                const token = await jwt.sign({ _id: user._id }, "DEV@Tinder$790", {expiresIn: "1d"});
+                const token = await user.getJWT();
 
                 //Add token to cookie and res back to user
                 res.cookie("token", token, {expires: new Date(Date.now() + 8*3600000)});
