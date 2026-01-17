@@ -1,18 +1,16 @@
 const express = require("express");
 const connectDB = require("./config/database")
-const app = express();
 const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validate");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const {userAuth} = require("./middlewares/auth");
+const app = express();
+app.use(express.json());  
+app.use(cookieParser()); 
 
-//this convert req.body from json to object
-app.use(express.json());
-
-//cookie parser
-app.use(cookieParser());
 
 //signup API
 app.post("/signup", async (req, res) => {
@@ -44,7 +42,7 @@ app.post("/signup", async (req, res) => {
 
 //login API
 app.post("/login", async (req, res) => {
-
+    
     try {
         const { emailID, password } = req.body;
         if (!validator.isEmail(emailID)) {
@@ -80,128 +78,16 @@ app.post("/login", async (req, res) => {
 })
 
 //Get profile of logged in user
-app.get("/GetProfile", async (req, res) => {
+app.get("/GetProfile", userAuth, async (req, res) => {
     try {
-        const cookies = req.cookies;
-        const { token } = cookies;
-        if(!token){
-            throw new Error("Invalid token");
-        }
-
-        const decodedToken = await jwt.verify(token, "DEV@Tinder$790");//This will return _id which we have used in jwt.sign
-        const { _id } = decodedToken;
-        const user = await User.findById(_id);
-        if(!user){
-            throw new Error("User doesnot Exist");
-        }
-
+        
+        const user = req.user;
         res.send(user);
     }
     catch(err){
-        res.status(400).send(err.message);
+        res.status(400).send(err.message); 
     }
     
-});
-
-//Get User By EmailID
-app.get("/GetUserByEmailID", async (req, res) => {
-    const userEmail = req.body.emailID;
-
-    try {
-        const user = await User.find({ emailID: userEmail });
-        if (user.length) {
-            res.send(user);
-        }
-        else {
-            res.status(404).send(`No user found for ${userEmail}`);
-        }
-    }
-    catch (err) {
-        res.status(400).send("Something went wrong");
-    }
-});
-
-//Get User by ID
-app.get("/GetUserById", async (req, res) => {
-    const userId = req.body._id;
-    if (!userId) {
-        return res.status(400).send("_id is required in request body");
-    }
-    try {
-        const user = await User.findById(userId);
-        if (user) {
-            res.send(user);
-        }
-        else {
-            res.status(404).send("User not found");
-        }
-    }
-    catch (err) {
-        res.status(400).send("Something went wrong");
-    }
-});
-
-//Get Feed for user, i.e.Get all user
-app.get("/GetFeed", async (req, res) => {
-
-    try {
-        const user = await User.find({});
-        if (user.length) {
-            res.send(user);
-        }
-        else {
-            res.status(404).send("No user found");
-        }
-    }
-    catch (err) {
-        res.status(400).send("Something went wrong");
-    }
-});
-
-//delete user by id
-app.delete("/DeleteUserById", async (req, res) => {
-    const userId = req.body.userId;
-
-    try {
-        const user = await User.findByIdAndDelete(userId);
-        if (user) {
-            res.send(`${user} deleted successfully`);
-        }
-        else {
-            res.status(404).send(`User not found`);
-        }
-    }
-    catch (err) {
-        res.status(400).send("Something went wrong");
-    }
-});
-
-//Update user by ID
-app.patch("/UpdateUser/:userId", async (req, res) => {
-
-    const userId = req.params.userId;
-    const updateData = req.body;
-
-    const ALLOWED_FIELD = ["about", "age", "gender", "photoUrl", "skills"];
-    const isAllowed = Object.keys(updateData).every((k) => ALLOWED_FIELD.includes(k));
-    if (!isAllowed) {
-        res.status(400).send("Update Not Allowed");
-    }
-    try {
-        const user = await User.findByIdAndUpdate(userId, updateData, {
-            new: true,
-            runValidators: true
-        });
-        if (user) {
-            res.send(`User Updated Successfully`);
-        }
-        else {
-            res.status(404).send("No user found");
-        }
-    }
-    catch (err) {
-        res.status(400).send("Something went wrong" + err);
-    }
 });
 
 
