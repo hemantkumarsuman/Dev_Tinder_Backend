@@ -56,11 +56,10 @@ app.post("/login", async (req, res) => {
             const isPasswordValid = await bcrypt.compare(password, user.password);
             if (isPasswordValid) {
                 //create JWT token
-                const token = await jwt.sign({ _id: user._id }, "DEV@Tinder$790");
+                const token = await jwt.sign({ _id: user._id }, "DEV@Tinder$790", {expiresIn: "1d"});
 
-                console.log(token);
                 //Add token to cookie and res back to user
-                res.cookie("token", token);
+                res.cookie("token", token, {expires: new Date(Date.now() + 8*3600000)});
 
                 res.send("Login Successfull!!!");
             }
@@ -88,6 +87,17 @@ app.get("/GetProfile", userAuth, async (req, res) => {
         res.status(400).send(err.message); 
     }
     
+});
+
+//send Connection
+app.post("/SendConnectionRequest",userAuth, async(req, res) => {
+    try{
+        console.log("Send Connection Request");
+        res.send("Connection Sent");
+    }
+    catch(err){
+        res.status(400).send("Error:"+err.message);
+    }    
 });
 
 
